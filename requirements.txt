@@ -1,0 +1,11 @@
+opencv-python-headless
+numpy
+flask
+flask-talisman
+flask-limiter
+firebase-admin
+mediapipe
+cryptography
+requests
+twilio
+gunicorn

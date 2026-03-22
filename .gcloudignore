@@ -1,0 +1,15 @@
+.git
+.agents
+.venv
+venv
+voter_images
+models/*.task
+models/*.onnx
+node_modules
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.db
+instance
+*.log

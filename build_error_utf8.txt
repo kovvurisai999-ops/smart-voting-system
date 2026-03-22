@@ -1,0 +1,40 @@
+﻿gcloud.cmd : ERROR: 
+(gcloud.builds.submit) 
+The required property 
+[project] is not 
+currently set.
+At line:1 char:1
++ & "$env:LocalAppData\G
+oogle\Cloud SDK\google-c
+loud-sdk\bin\gcloud.cmd 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo      
+        : NotSpecified  
+  : (ERROR: (gcloud..   
+ .. currently set.:S    
+tring) [], RemoteEx    
+ception
+    + FullyQualifiedErr 
+   orId : NativeComman  
+  dError
+ 
+It can be set on a 
+per-command basis by 
+re-running your command 
+with the [--project] 
+flag.
+
+You may set it for your 
+current workspace by 
+running:
+
+  $ gcloud config set 
+project VALUE
+
+or it can be set 
+temporarily by the 
+environment variable 
+[CLOUDSDK_CORE_PROJECT]
