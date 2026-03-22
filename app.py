@@ -2,6 +2,17 @@ import os
 import random
 import base64
 import hashlib
+import sys
+
+# Debugging Render environment
+print("Python Path:", sys.path)
+print("Current Directory:", os.getcwd())
+try:
+    import numpy as np_check
+    print("Numpy Version:", np_check.__version__)
+except ImportError:
+    print("Numpy NOT FOUND in path!")
+
 import numpy as np
 import cv2
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
