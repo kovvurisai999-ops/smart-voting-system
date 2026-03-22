@@ -15,6 +15,7 @@ _DETECT_URL = "https://github.com/opencv/opencv_zoo/raw/main/models/face_detecti
 
 def _download(path, url):
     if not os.path.exists(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         print(f"Downloading {os.path.basename(path)} …")
         import urllib.request
         urllib.request.urlretrieve(url, path)
