@@ -16,6 +16,20 @@ def get_db():
         return db
         
     if not firebase_admin._apps:
+        # 1. Try Environment Variable (For Cloud Deployment)
+        env_cred_json = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
+        if env_cred_json:
+            try:
+                import json
+                cred_dict = json.loads(env_cred_json)
+                cred = credentials.Certificate(cred_dict)
+                firebase_admin.initialize_app(cred)
+                db = firestore.client()
+                return db
+            except Exception as e:
+                print(f"Firebase Env Init Error: {e}")
+
+        # 2. Try Local File (For Local Development)
         if os.path.exists(DB_KEY_PATH):
             try:
                 cred = credentials.Certificate(DB_KEY_PATH)
@@ -23,7 +37,7 @@ def get_db():
                 db = firestore.client()
                 return db
             except Exception as e:
-                print(f"Firebase Init Error: {e}")
+                print(f"Firebase File Init Error: {e}")
                 return None
         return None
     else:
