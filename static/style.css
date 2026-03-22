@@ -1,0 +1,168 @@
+:root {
+    --bg-color: #f0f4f8;
+    --primary-color: #0052cc;
+    --secondary-color: #003d99;
+    --text-color: #333;
+    --box-bg: #fff;
+    --success: #28a745;
+    --error: #dc3545;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: var(--text-color);
+}
+
+.container {
+    background-color: var(--box-bg);
+    padding: 2rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+}
+
+h1 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+h2 {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    color: #444;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border 0.3s;
+}
+
+input[type="text"]:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.btn:hover {
+    background-color: var(--secondary-color);
+}
+
+.btn.secondary {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+}
+
+.btn.secondary:hover {
+    background-color: #e5e7eb;
+}
+
+.error-msg {
+    color: var(--error);
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+/* Camera box */
+#videoElement {
+    width: 100%;
+    border-radius: 8px;
+    background-color: #000;
+    margin-bottom: 1rem;
+}
+
+.status-box {
+    padding: 1rem;
+    border-radius: 6px;
+    background-color: #e2e3e5;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.status-success {
+    background-color: #d4edda;
+    color: var(--success);
+}
+
+.status-error {
+    background-color: #f8d7da;
+    color: var(--error);
+}
+
+/* Voting Radio Buttons */
+.candidate-list {
+    text-align: left;
+    margin-bottom: 2rem;
+}
+
+.candidate-item {
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: border 0.2s, background 0.2s;
+}
+
+.candidate-item:hover {
+    background-color: #f9f9f9;
+}
+
+.candidate-item input {
+    margin-right: 1rem;
+}
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+.dashboard-table th, .dashboard-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+.dashboard-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}

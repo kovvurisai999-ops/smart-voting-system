@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Voter Registration</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .camera-wrapper { position: relative; width: 100%; max-width: 500px; margin: 0 auto; }
+        #video { width: 100%; border-radius: 12px; background: #000; }
+        .progress-container { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin: 15px 0; overflow: hidden; }
+        #progress-bar { width: 0%; height: 100%; background: #2563eb; transition: width 0.3s; }
+        .guidelines { background: #fff9db; padding: 15px; border-radius: 8px; font-size: 0.9em; border-left: 4px solid #fcc419; margin-bottom: 20px; text-align: left; }
+        .guidelines ul { margin: 5px 0 0 20px; padding: 0; }
+        .quality-metrics { display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 5px; }
+        .metric { padding: 4px 8px; border-radius: 4px; background: #f1f3f5; }
+        .step-info { font-weight: 600; color: #1a1a1a; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 650px;">
+        <h1>Andhra Pradesh Legislative Assembly Election - Registration</h1>
+        
+        <div id="setup-form">
+            <div class="guidelines">
+                <strong>IMPORTANT GUIDELINES:</strong>
+                <ul>
+                    <li>Avoid using masks, glasses, or hats.</li>
+                    <li>Ensure your face is 60% visible and in medium lighting.</li>
+                    <li><strong>Background objects are fine</strong>; the system will focus on you.</li>
+                    <li>The process will collect 25 samples and 5s video.</li>
+                </ul>
+            </div>
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="reg-name" required placeholder="Full Name">
+            </div>
+            <div class="form-group">
+                <label>Aadhar Number (12 digits)</label>
+                <input type="text" id="reg-aadhar" required placeholder="Aadhar Number" maxlength="12">
+            </div>
+            <div class="form-group">
+                <label>Select District</label>
+                <select id="reg-district" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ced4da;">
+                    <option value="" disabled selected>Select your district</option>
+                    <option value="Alluri Sitaramaraju">Alluri Sitaramaraju</option>
+                    <option value="Anakapalli">Anakapalli</option>
+                    <option value="Anantapur">Anantapur</option>
+                    <option value="Annamayya">Annamayya</option>
+                    <option value="Bapatla">Bapatla</option>
+                    <option value="Chittoor">Chittoor</option>
+                    <option value="Dr. B.R. Ambedkar Konaseema">Dr. B.R. Ambedkar Konaseema</option>
+                    <option value="East Godavari">East Godavari</option>
+                    <option value="Eluru">Eluru</option>
+                    <option value="Guntur">Guntur</option>
+                    <option value="Kakinada">Kakinada</option>
+                    <option value="Krishna">Krishna</option>
+                    <option value="Kurnool">Kurnool</option>
+                    <option value="Nandyal">Nandyal</option>
+                    <option value="NTR District">NTR District</option>
+                    <option value="Palnadu">Palnadu</option>
+                    <option value="Parvathipuram Manyam">Parvathipuram Manyam</option>
+                    <option value="Prakasam">Prakasam</option>
+                    <option value="Sri Balaji District">Sri Balaji District</option>
+                    <option value="Sri Potti Sriramulu Nellore">Sri Potti Sriramulu Nellore</option>
+                    <option value="Sri Satya Sai District">Sri Satya Sai District</option>
+                    <option value="Srikakulam">Srikakulam</option>
+                    <option value="Tirupati">Tirupati</option>
+                    <option value="Visakhapatnam">Visakhapatnam</option>
+                    <option value="Vizianagaram">Vizianagaram</option>
+                    <option value="West Godavari">West Godavari</option>
+                    <option value="YSR Kadapa">YSR Kadapa</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Voter ID</label>
+                <input type="text" id="reg-voterid" required placeholder="Voter ID">
+            </div>
+            
+            <button onclick="startCapture()" id="start-btn" class="btn" style="margin-top: 20px;">Start Data Collection</button>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/" style="color: #4dabf7; text-decoration: none; font-size: 0.9em;">← Back to Home</a>
+            </div>
+        </div>
+
+        <div id="capture-interface" style="display:none;">
+            <div class="step-info" id="current-step">Phase 1: Capturing 25 Face Samples</div>
+            <div class="quality-metrics">
+                <span class="metric" id="metric-visibility">Visibility: --</span>
+                <span class="metric" id="metric-lighting">Lighting: --</span>
+            </div>
+            
+            <div class="camera-wrapper">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="overlay" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none;"></canvas>
+                <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+            </div>
+
+            <div class="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            <div class="status-msg" id="status">Ready to capture...</div>
+        </div>
+    </div>
+
+    <script>
+        let stream, video, canvas, context;
+        let samples = [];
+
+        function startCapture() {
+            const name = document.getElementById('reg-name').value;
+            const aadhar = document.getElementById('reg-aadhar').value;
+            const voterid = document.getElementById('reg-voterid').value;
+            const district = document.getElementById('reg-district').value;
+
+            if (!name || aadhar.length !== 12 || !voterid || !district) {
+                alert("Please fill all fields correctly, including selecting your district.");
+                return;
+            }
+
+            document.getElementById('setup-form').style.display = 'none';
+            document.getElementById('capture-interface').style.display = 'block';
+            
+            video = document.getElementById('video');
+            canvas = document.getElementById('canvas');
+            context = canvas.getContext('2d');
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(s => {
+                    stream = s;
+                    video.srcObject = s;
+                    beginSequence();
+                });
+        }
+
+        function drawLandmarks(landmarks) {
+            const overlay = document.getElementById('overlay');
+            const octx = overlay.getContext('2d');
+            overlay.width = video.videoWidth;
+            overlay.height = video.videoHeight;
+            octx.clearRect(0, 0, overlay.width, overlay.height);
+            
+            octx.lineWidth = 2;
+            octx.strokeStyle = '#00ff00';
+            
+            landmarks.forEach(pt => {
+                const x = pt[0];
+                const y = pt[1];
+                octx.beginPath();
+                octx.arc(x, y, 4, 0, 2 * Math.PI);
+                octx.stroke();
+                // Crosshair
+                octx.beginPath();
+                octx.moveTo(x - 8, y); octx.lineTo(x + 8, y);
+                octx.moveTo(x, y - 8); octx.lineTo(x, y + 8);
+                octx.stroke();
+            });
+        }
+
+        async function beginSequence() {
+            const status = document.getElementById('status');
+            const pBar = document.getElementById('progress-bar');
+            const vMetric = document.getElementById('metric-visibility');
+            const lMetric = document.getElementById('metric-lighting');
+            
+            status.innerText = "Scanning Biometrics...";
+            await new Promise(r => setTimeout(r, 2000));
+
+            // Phase 1: 25 Samples
+            while (samples.length < 25) {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const frameData = canvas.toDataURL('image/jpeg', 0.6);
+
+                try {
+                    const resp = await fetch('/validate_frame', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: frameData })
+                    });
+                    const result = await resp.json();
+
+                    if (result.landmarks) drawLandmarks(result.landmarks);
+
+                    vMetric.innerText = `Visibility: ${Math.round(result.visibility * 100)}%`;
+                    lMetric.innerText = `Lighting: ${Math.round(result.lighting * 100)}%`;
+                    
+                    if (result.status === 'success') {
+                        samples.push(frameData);
+                        pBar.style.width = ((samples.length / 25) * 100) + "%";
+                        status.innerText = `Captured ${samples.length}/25 samples (Phase 1)...`;
+                        status.style.color = "blue";
+                        await new Promise(r => setTimeout(r, 300)); // Capture delay
+                    } else {
+                        status.innerText = "⚠️ " + result.message;
+                        status.style.color = "orange";
+                        await new Promise(r => setTimeout(r, 500)); // Retry delay
+                    }
+                } catch (err) {
+                    console.error(err);
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+            }
+
+            // Phase 2: Video
+            document.getElementById('current-step').innerText = "Phase 2: Recording 8s Liveness Video";
+            pBar.style.width = "0%";
+            pBar.style.background = "#e67e22";
+            
+            videoChunks = [];
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = e => videoChunks.push(e.data);
+            mediaRecorder.onstop = uploadData;
+            
+            mediaRecorder.start();
+            
+            let timeLeft = 8;
+            const timer = setInterval(() => {
+                let instruction = "";
+                if (timeLeft > 6) instruction = "Step 1/4: LOOK DIRECTLY AT CAMERA";
+                else if (timeLeft > 4) instruction = "Step 2/4: TURN FACE RIGHT →";
+                else if (timeLeft > 2) instruction = "Step 3/4: ← TURN FACE LEFT";
+                else instruction = "Step 4/4: BLINK YOUR EYES NOW";
+
+                status.innerHTML = `<span style="font-size: 1.2rem; font-weight: bold; color: #d35400;">${instruction}</span><br>Recording... ${timeLeft}s`;
+                
+                pBar.style.width = ((8 - timeLeft) / 8 * 100) + "%";
+                
+                timeLeft--;
+                if (timeLeft < 0) {
+                    clearInterval(timer);
+                    mediaRecorder.stop();
+                    status.innerText = "Finalizing data...";
+                }
+            }, 1000);
+        }
+
+
+        function playFraudAlarm() {
+            document.body.style.backgroundColor = "#ffc9c9";
+            document.body.style.transition = "background 0.3s";
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                for (let i = 0; i < 12; i++) {
+                    gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime + i * 0.5);
+                    gainNode.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.5 + 0.25);
+                }
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 6);
+            } catch (e) { console.error(e); }
+        }
+
+        async function uploadData() {
+            const status = document.getElementById('status');
+            const pBar = document.getElementById('progress-bar');
+            const aadhar = document.getElementById('reg-aadhar').value;
+
+            // ── AI FRAUD CHECK STEP ──────────────────────────────────────────
+            document.getElementById('current-step').innerText = "AI Biometric Fraud Check...";
+            pBar.style.width = "100%";
+            pBar.style.background = "#8e44ad";
+            status.innerHTML = `
+                <span style='color:#8e44ad; font-weight:bold; font-size:1.1em;'>🤖 AI Agent Scanning...</span><br>
+                <span style='font-size:0.85em; color:#555;'>Comparing your face against all registered voters...<br>
+                Checking: Eyes • Nose • Mouth • Face shape</span>`;
+
+            try {
+                // Send first sample to AI fraud check endpoint
+                const fraudResp = await fetch('/api/phase3_fraud_check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ aadhar: aadhar, image: samples[0] })
+                });
+                const fraudData = await fraudResp.json();
+
+                if (fraudData.status === 'fraud') {
+                    // ── FRAUD DETECTED ──────────────────────────────────────
+                    pBar.style.background = "#e74c3c";
+                    status.innerHTML = `
+                        <div style="background:#ff0000;color:#fff;padding:15px;border-radius:10px;font-weight:bold;font-size:1.1em;">
+                            🚨 FRAUD DETECTED! 🚨<br><br>
+                            ${fraudData.message}<br><br>
+                            <span style='font-size:0.85em;'>Returning to Home in 6 seconds...</span>
+                        </div>`;
+                    playFraudAlarm();
+                    setTimeout(() => window.location.href = "/", 6500);
+                    return;
+                }
+
+                // ── NEW UNIQUE USER — SAVE REGISTRATION ──────────────────────
+                document.getElementById('current-step').innerText = "Saving Registration Data...";
+                pBar.style.background = "#27ae60";
+                status.innerHTML = "<span style='color:green; font-weight:bold;'>✅ AI Verified: Unique Person. Saving registration...</span>";
+
+                const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(videoBlob);
+                reader.onloadend = () => {
+                    const videoBase64 = reader.result;
+                    fetch('/process_registration', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            aadhar: aadhar,
+                            voterid: document.getElementById('reg-voterid').value,
+                            name: document.getElementById('reg-name').value,
+                            district: document.getElementById('reg-district').value,
+                            images: samples,
+                            video: videoBase64
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            status.innerHTML = "✅ <span style='color:green; font-weight:bold;'>REGISTRATION SUCCESSFUL!</span><br><span style='font-size:0.85em'>Proceeding to verification...</span>";
+                            setTimeout(() => {
+                                window.location.href = data.next_url || "/";
+                            }, 3000);
+                        } else {
+                            status.innerText = "❌ ERROR: " + data.message;
+                            status.style.color = "red";
+                        }
+                    });
+                };
+            } catch (err) {
+                status.innerText = "❌ ERROR: " + err.message;
+                status.style.color = "red";
+            }
+        }    </script>
+</body>
+</html>

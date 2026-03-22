@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cast Your Vote</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container" style="max-width: 600px;">
+        <h1>Andhra Pradesh Legislative Assembly Election</h1>
+        <h2>Voter: {{ name }}</h2>
+        
+        <p style="margin-bottom: 1.5rem; text-align: left; color: #555;">
+            Please select your preferred candidate and click "Submit Vote". 
+            This action is final and secured with SHA-256 encryption.
+        </p>
+
+        <form action="{{ url_for('vote') }}" method="POST">
+            <div class="candidate-list">
+                {% for cid, cname in candidates.items() %}
+                <label class="candidate-item" style="display:block;">
+                    <input type="radio" name="candidate" value="{{ cid }}" required>
+                    <span style="font-size: 1.1rem; font-weight: 500;">{{ cname }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            
+            <button type="submit" class="btn" style="background-color: var(--success);">
+                Confirm & Submit Secure Vote
+            </button>
+        </form>
+    </div>
+</body>
+</html>

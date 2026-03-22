@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Election Dashboard - Andhra Pradesh</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #228be6;
+            --secondary: #15aabf;
+            --background: #f8f9fa;
+            --card: #ffffff;
+            --text: #212529;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #228be6, #15aabf);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(34, 139, 230, 0.2);
+        }
+
+        .header h1 { margin: 0; font-size: 2.5em; }
+        .header p { opacity: 0.9; margin-top: 10px; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.5em;
+            color: #495057;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .district-selector {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            font-family: inherit;
+            font-size: 0.9em;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: #e7f5ff;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-box.winner { background: #ebfbee; color: #2b8a3e; }
+        .stat-box h3 { margin: 0; font-size: 0.9em; text-transform: uppercase; color: #748ffc; }
+        .stat-box p { margin: 10px 0 0; font-size: 1.4em; font-weight: 600; }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #adb5bd;
+        }
+
+        .btn-home {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 25px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: 0.3s;
+        }
+
+        .btn-home:hover { background: rgba(255,255,255,0.3); }
+
+        @media (max-width: 600px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Live Election Results</h1>
+            <p>Andhra Pradesh Legislative Assembly 2026</p>
+            <a href="/" class="btn-home">← Back to Main Gate</a>
+        </div>
+
+        <!-- Live Sync Status Bar -->
+        <div id="sync-bar" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.2); color: white;">
+            <div style="display: flex; align-items: center;">
+                <span id="sync-dot" style="height: 12px; width: 12px; background: #51cf66; border-radius: 50%; display: inline-block; margin-right: 12px; box-shadow: 0 0 10px #51cf66;"></span>
+                <span id="sync-label" style="font-weight: 600; font-size: 1.1em;">LIVE SYNC ACTIVE</span>
+                <span id="last-sync-time" style="margin-left: 20px; opacity: 0.8; font-size: 0.9em;">Last Update: --</span>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <select id="district-select" style="padding: 8px 15px; border-radius: 8px; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.3); cursor: pointer;">
+                    <option value="all">🌏 All Districts</option>
+                </select>
+                <button id="manual-refresh" class="btn-home" style="margin: 0; padding: 8px 15px; font-size: 0.9em; background: #228be6; cursor: pointer;">Refresh Now 🔄</button>
+            </div>
+        </div>
+
+        <!-- Enhanced Live Summary -->
+        <div class="stats-summary" id="overall-summary">
+            <div class="stat-box" style="padding: 40px; background: #e7f5ff; border: 2px solid #a5d8ff;">
+                <h3>Total Votes Cast</h3>
+                <p id="total-count" style="font-size: 3em; margin: 15px 0;">SCANNING...</p>
+            </div>
+            <div class="stat-box winner" style="padding: 40px; background: #ebfbee; border: 2px solid #b2f2bb;">
+                <h3>Current Leading Party</h3>
+                <p id="leading-party" style="font-size: 2.5em; margin: 15px 0;">ANALYZING...</p>
+            </div>
+        </div>
+
+        <!-- Global Charts -->
+        <div class="dashboard-grid" style="margin-bottom: 40px;">
+            <div class="card">
+                <h2>Statewide Vote Share</h2>
+                <canvas id="overallChart"></canvas>
+            </div>
+            <div class="card">
+                <h2>
+                    Regional Analytics
+                </h2>
+                <div id="district-winner-alert" style="margin-bottom: 15px; font-weight: 600; color: #15aabf;"></div>
+                <canvas id="districtChart"></canvas>
+            </div>
+        </div>
+
+        <!-- NEW: Graphical District Grid -->
+        <div class="card">
+            <h2 style="margin-bottom: 30px;">District-wise Leading Status (Graphical Representation)</h2>
+            <div id="district-lead-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                <!-- Generating via JS -->
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2026 Smart Voting System - Secured by AI Biometrics
+        </footer>
+    </div>
+
+    <script>
+        let allData = null;
+        let overallChart = null;
+        let districtChart = null;
+
+        const partyColors = {
+            1: '#ffd43b', // TDP (Yellow)
+            2: '#228be6', // YSRCP (Blue)
+            3: '#fa5252', // JSP (Red)
+            4: '#fd7e14', // BJP (Orange)
+            5: '#adb5bd'  // NOTA (Gray)
+        };
+
+        async function loadData() {
+            const syncDot = document.getElementById('sync-dot');
+            const syncLabel = document.getElementById('sync-label');
+            const syncTime = document.getElementById('last-sync-time');
+
+            try {
+                const res = await fetch('/api/results');
+                if (!res.ok) {
+                    if (res.status === 429) {
+                        syncLabel.textContent = "RATE LIMITED - WAITING";
+                        syncDot.style.background = "#fab005";
+                    }
+                    return;
+                }
+                
+                const data = await res.json();
+                allData = data;
+                
+                if (document.getElementById('district-select').options.length <= 1) {
+                    populateDistricts();
+                }
+                
+                updateTotalSummary();
+                updateCharts();
+                renderDistrictLeadGrid();
+                
+                syncLabel.textContent = "LIVE SYNC ACTIVE";
+                syncDot.style.background = "#51cf66";
+                syncTime.textContent = "Last Update: " + new Date().toLocaleTimeString();
+
+            } catch (err) {
+                console.error("Polling failed:", err);
+                syncLabel.textContent = "SYNC DISCONNECTED";
+                syncDot.style.background = "#fa5252";
+                syncTime.textContent = "Retrying in 10s...";
+            }
+        }
+
+        function populateDistricts() {
+            const select = document.getElementById('district-select');
+            allData.districts.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = "📍 " + d;
+                select.appendChild(opt);
+            });
+        }
+
+        function updateCharts() {
+            renderOverallChart();
+            updateDistrictChart();
+        }
+
+        function updateTotalSummary() {
+            const total = Object.values(allData.overall).reduce((a, b) => a + b, 0);
+            document.getElementById('total-count').textContent = total;
+            
+            let max = -1;
+            let leaderCid = null;
+            let leaderName = "None";
+            for (let cid in allData.overall) {
+                if (allData.overall[cid] > max && allData.overall[cid] > 0) {
+                    max = allData.overall[cid];
+                    leaderCid = cid;
+                    leaderName = allData.candidates[cid];
+                }
+            }
+            
+            const leaderEl = document.getElementById('leading-party');
+            leaderEl.textContent = total > 0 ? leaderName : "No votes yet";
+            
+            if (total > 0 && leaderCid) {
+                const color = partyColors[leaderCid];
+                leaderEl.parentElement.style.borderColor = color;
+                leaderEl.style.color = color;
+            }
+        }
+
+        function renderDistrictLeadGrid() {
+            const container = document.getElementById('district-lead-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            allData.districts.forEach(dist => {
+                const stats = allData.regional[dist] || {};
+                let totalDistVotes = Object.values(stats).reduce((a, b) => a + b, 0);
+                
+                let max = -1;
+                let leaderCid = null;
+                let leaderName = "Waiting for Votes";
+                
+                for (let cid in allData.candidates) {
+                    if ((stats[cid] || 0) > max && (stats[cid] || 0) > 0) {
+                        max = stats[cid];
+                        leaderCid = cid;
+                        leaderName = allData.candidates[cid];
+                    }
+                }
+
+                const color = partyColors[leaderCid] || '#eee';
+                const percent = totalDistVotes > 0 ? (max / totalDistVotes * 100).toFixed(1) : 0;
+
+                const card = document.createElement('div');
+                card.style.cssText = `
+                    background: #fff;
+                    padding: 20px;
+                    border-radius: 12px;
+                    border-left: 5px solid ${color};
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    transition: 0.3s;
+                `;
+                
+                card.innerHTML = `
+                    <div style="font-weight: 600; color: #495057; margin-bottom: 10px; font-size: 1.1em;">${dist}</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 0.9em; font-weight: 600; color: ${color};">${leaderName}</span>
+                        <span style="font-size: 0.85em; background: #f8f9fa; padding: 2px 8px; border-radius: 10px;">${max > 0 ? max : 0} votes</span>
+                    </div>
+                    ${max > 0 ? `
+                    <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                        <div style="width: ${percent}%; height: 100%; background: ${color}; border-radius: 4px;"></div>
+                    </div>
+                    <div style="font-size: 0.75em; text-align: right; margin-top: 5px; color: #adb5bd;">${percent}% Share</div>
+                    ` : `
+                    <div style="font-size: 0.75em; color: #ced4da;">No data yet</div>
+                    `}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderOverallChart() {
+            const labels = [];
+            const data = [];
+            const colors = [];
+
+            for (let cid in allData.candidates) {
+                labels.push(allData.candidates[cid]);
+                data.push(allData.overall[cid] || 0);
+                colors.push(partyColors[cid] || '#ddd');
+            }
+
+            if (!overallChart) {
+                const ctx = document.getElementById('overallChart').getContext('2d');
+                overallChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: data, backgroundColor: colors, borderWidth: 0 }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                });
+            } else {
+                overallChart.data.datasets[0].data = data;
+                overallChart.update();
+            }
+        }
+
+        function updateDistrictChart() {
+            const district = document.getElementById('district-select').value;
+            if (!district || district === 'all') {
+                document.getElementById('district-winner-alert').textContent = "Select a district above to see deep analytics.";
+                return;
+            }
+
+            const districtData = allData.regional[district] || {};
+            const labels = [];
+            const data = [];
+            const colors = [];
+
+            let maxVotes = -1;
+            let leader = "None";
+
+            for (let cid in allData.candidates) {
+                const votes = districtData[cid] || 0;
+                labels.push(allData.candidates[cid]);
+                data.push(votes);
+                colors.push(partyColors[cid] || '#ddd');
+
+                if (votes > maxVotes && votes > 0) {
+                    maxVotes = votes;
+                    leader = allData.candidates[cid];
+                }
+            }
+
+            document.getElementById('district-winner-alert').textContent = 
+                maxVotes > 0 ? `Currently Leading in ${district}: ${leader}` : "No votes cast yet in this district.";
+
+            if (!districtChart) {
+                const ctx = document.getElementById('districtChart').getContext('2d');
+                districtChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{ label: 'Votes', data: data, backgroundColor: colors, borderRadius: 8 }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        scales: { x: { beginAtZero: true }, y: { grid: { display: false } } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            } else {
+                districtChart.data.datasets[0].data = data;
+                districtChart.update();
+            }
+        }
+
+        // Global Event Listeners
+        document.getElementById('manual-refresh').addEventListener('click', () => {
+            const btn = document.getElementById('manual-refresh');
+            btn.textContent = "Updating...";
+            btn.disabled = true;
+            loadData().finally(() => {
+                btn.textContent = "Refresh Now 🔄";
+                btn.disabled = false;
+            });
+        });
+
+        document.getElementById('district-select').addEventListener('change', () => {
+            updateDistrictChart();
+            renderDistrictLeadGrid();
+        });
+
+        // Initialize & Start Real-Time Polling (10 seconds for user's requested real-time feel)
+        loadData();
+        setInterval(loadData, 10000);
+    </script>
+</body>
+</html>

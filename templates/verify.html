@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biometric Verification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container { max-width: 600px; }
+        #videoElement { transform: scaleX(-1); /* mirror */ }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Face Verification</h1>
+        <h2>Welcome, {{ name }}</h2>
+        <p style="text-align:center; color:#555; font-weight: 500;">Aadhar: {{ session.get('masked_aadhar', '') }}</p>
+        
+        <div id="statusBox" class="status-box">
+            Initializing camera... Please allow camera access.
+        </div>
+        
+        <div style="position: relative; width: 100%; max-width: 480px; margin: 0 auto;">
+            <video id="videoElement" autoplay playsinline style="width: 100%; border-radius: 8px;"></video>
+            <canvas id="overlay" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none;"></canvas>
+        </div>
+        <canvas id="captureCanvas" style="display:none;"></canvas>
+        
+        <p style="color: #666; font-size:0.9rem; margin-top: 1rem;">
+            Instructions: Ensure your face is clearly visible. Blink to prove liveness.
+        </p>
+    </div>
+
+    <script>
+        const video = document.getElementById('videoElement');
+        const overlay = document.getElementById('overlay');
+        const octx = overlay.getContext('2d');
+        const captureCanvas = document.getElementById('captureCanvas');
+        const cctx = captureCanvas.getContext('2d');
+        const statusBox = document.getElementById('statusBox');
+        
+        let stream = null;
+        let verifying = true;
+
+        function drawLandmarks(landmarks) {
+            octx.clearRect(0, 0, overlay.width, overlay.height);
+            
+            // Mirror coordinates for display if needed
+            const h = overlay.height;
+            const w = overlay.width;
+            
+            octx.lineWidth = 3;
+            octx.strokeStyle = '#00ff00';
+            
+            landmarks.forEach((pt, i) => {
+                const x = pt[0] * (w / captureCanvas.width);
+                const y = pt[1] * (h / captureCanvas.height);
+                
+                // Draw crosshair/circle on landmarks
+                octx.beginPath();
+                octx.arc(x, y, 5, 0, 2 * Math.PI);
+                octx.stroke();
+                
+                // Connecting lines for "Scanning" look
+                octx.beginPath();
+                octx.moveTo(x - 10, y); octx.lineTo(x + 10, y);
+                octx.moveTo(x, y - 10); octx.lineTo(x, y + 10);
+                octx.stroke();
+            });
+        }
+
+        // Start camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(s => {
+                stream = s;
+                video.srcObject = stream;
+                statusBox.textContent = "Camera active. Processing...";
+                
+                // Start sending frames (Optimized at 250ms for "Quick" verification)
+                setInterval(sendFrame, 250); 
+            })
+            .catch(err => {
+                statusBox.textContent = "Error accessing camera: " + err;
+                statusBox.className = "status-box status-error";
+            });
+
+        function playFraudAlarm() {
+            document.body.style.backgroundColor = "#ffc9c9"; // Flash Red
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                
+                for (let i = 0; i < 10; i++) {
+                    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime + i * 0.5);
+                    gainNode.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.5 + 0.25);
+                }
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 5);
+            } catch (e) { console.error(e); }
+        }
+
+        function sendFrame() {
+            if (!verifying) return;
+            
+            if (video.videoWidth > 0) {
+                captureCanvas.width = video.videoWidth;
+                captureCanvas.height = video.videoHeight;
+                overlay.width = video.videoWidth; 
+                overlay.height = video.videoHeight;
+                cctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+            }
+            
+            // Get base64 string
+            const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.8);
+            
+            // Send to server
+            fetch('/process_frame', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: dataUrl })
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Draw landmarks even if not successful yet
+                if (data.landmarks) {
+                    drawLandmarks(data.landmarks);
+                }
+
+                if (data.status === 'success') {
+                    verifying = false;
+                    statusBox.textContent = data.message;
+                    statusBox.className = "status-box status-success";
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('vote') }}";
+                    }, 1500);
+                } else if (data.status === 'fraud') {
+                    // STOP EVERYTHING - START ALARM
+                    verifying = false;
+                    statusBox.innerHTML = `<span style="font-size: 1.5rem; color: #ff0000; font-weight: bold;">🚨 ${data.message} 🚨</span><br><br>SYSTEM LOCKDOWN FOR 5 SECONDS...`;
+                    statusBox.className = "status-box status-error";
+                    
+                    playFraudAlarm();
+                    
+                    // Terminate and redirect after 5 seconds
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('home') }}";
+                    }, 5500);
+                } else if (data.status === 'error') {
+                    // Normal error (retry or simple fail)
+                    statusBox.textContent = data.message;
+                    statusBox.className = "status-box status-error";
+                    // If it's a hard error like face mismatch, stop. 
+                    // But usually, we only stop on "fraud" or "success".
+                    // Let's stop on mismatched face too as requested "stop that user vote process"
+                    if (data.message.includes("does not match")) {
+                         verifying = false;
+                         setTimeout(() => { window.location.href = "{{ url_for('home') }}"; }, 3000);
+                    }
+                } else {
+                    // Waiting (e.g., waiting for blink)
+                    statusBox.textContent = data.message;
+                }
+            })
+            .catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>

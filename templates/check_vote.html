@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify My Vote</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container" style="max-width: 500px;">
+        <h1>Verify Your Vote</h1>
+        
+        {% if error %}
+        <div class="error-msg" style="background: #fff5f5; color: #e03131; padding: 10px; border-radius: 6px; margin-bottom: 20px;">
+            ⚠️ {{ error }}
+        </div>
+        {% endif %}
+
+        {% if success %}
+        <div class="success-box" style="background: #f1fef1; border: 2px solid #51cf66; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+            <h3 style="color: #2f9e44; margin-bottom: 10px;">Verification Successful!</h3>
+            <p style="font-size: 1.1rem;">You cast your vote for:</p>
+            <div style="font-size: 1.5rem; font-weight: bold; color: #1a1a1a; margin: 15px 0;">
+                {{ candidate }}
+            </div>
+            <p style="font-size: 0.9rem; color: #666;">This matches our secure encrypted record.</p>
+        </div>
+        <a href="{{ url_for('home') }}" class="btn">Back to Login</a>
+        {% else %}
+        <p style="margin-bottom: 1.5rem; color: #555;">Enter your credentials to confirm which candidate received your vote.</p>
+        
+        <form action="{{ url_for('check_vote') }}" method="POST">
+            <div class="form-group">
+                <label>Aadhar Number</label>
+                <input type="text" name="aadhar" required placeholder="12 Digit Aadhar" maxlength="12">
+            </div>
+            <div class="form-group">
+                <label>Voter ID</label>
+                <input type="text" name="voterid" required placeholder="Voter ID">
+            </div>
+            <button type="submit" class="btn">Verify My Vote</button>
+        </form>
+        <div style="margin-top: 1.5rem;">
+            <a href="{{ url_for('home') }}" style="color: #666; font-size: 0.9rem;">Back to Home</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote Submitted Successfully</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- SVG Checkmark -->
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+
+        <h1 style="color: var(--success);">Vote Cast Successfully!</h1>
+        <p style="text-align:center; color:#555; font-weight: 500;">Voter: {{ session.get('masked_aadhar', '') }}</p>
+        <p style="color: #666; font-size: 1.1rem; margin-top: 10px;">
+            Your vote has been securely encrypted and recorded. Thank you for participating in the election.
+        </p>
+        
+        <a href="{{ url_for('home') }}" class="btn" style="display: inline-block; text-decoration: none; margin-top: 30px; box-sizing: border-box;">
+            Return to Home
+        </a>
+    </div>
+</body>
+</html>

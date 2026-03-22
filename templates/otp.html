@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Factor Authentication</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="background: #f8f9fa;">
+    <div class="container" style="max-width: 400px; margin-top: 100px; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 20px;">🔐</div>
+        <h1>Two-Factor Check</h1>
+        <p style="color: #666; margin-bottom: 30px;">
+            A 6-digit OTP has been sent to <b>+91 {{ session.get('mask_mobile', 'Your Mobile') }}</b>.<br>
+            <small>(For this demo, check <b>otp_log.txt</b> in the project folder)</small>
+        </p>
+
+        {% if error %}
+            <div class="status-box status-error" style="margin-bottom: 20px;">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form action="{{ url_for('otp_verification') }}" method="POST">
+            <div class="form-group" style="text-align: left;">
+                <label>Enter 6-Digit OTP</label>
+                <input type="text" name="otp" required placeholder="000000" maxlength="6" 
+                       style="font-size: 1.5rem; text-align: center; letter-spacing: 5px;">
+            </div>
+            <button type="submit" class="btn" style="width: 100%; margin-top: 10 ;">Verify & Continue</button>
+        </form>
+
+        <div style="margin-top: 20px;">
+            <a href="/" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>
