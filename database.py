@@ -21,6 +21,8 @@ def get_db():
         if env_cred_json:
             try:
                 import json
+                # Strip potential whitespace
+                env_cred_json = env_cred_json.strip()
                 cred_dict = json.loads(env_cred_json)
                 cred = credentials.Certificate(cred_dict)
                 firebase_admin.initialize_app(cred)
@@ -28,6 +30,7 @@ def get_db():
                 return db
             except Exception as e:
                 print(f"Firebase Env Init Error: {e}")
+                print(f"Value received (first 10 chars): '{env_cred_json[:10]}...'")
 
         # 2. Try Local File (For Local Development)
         if os.path.exists(DB_KEY_PATH):
