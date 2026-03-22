@@ -2,29 +2,36 @@ import os
 import random
 import base64
 import hashlib
-import sys
+import traceback # Added traceback for error reporting
 
-# Debugging Render environment
-print("Python Path:", sys.path)
-print("Current Directory:", os.getcwd())
 try:
-    import numpy as np_check
-    print("Numpy Version:", np_check.__version__)
-except ImportError:
-    print("Numpy NOT FOUND in path!")
+    import sys
+    # Debugging Render environment
+    print("Python Path:", sys.path)
+    print("Current Directory:", os.getcwd())
+    try:
+        import numpy as np_check
+        print("Numpy Version:", np_check.__version__)
+    except ImportError:
+        print("Numpy NOT FOUND in path!")
 
-import numpy as np
-import cv2
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from flask_talisman import Talisman
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+    import numpy as np
+    import cv2
+    from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+    from flask_talisman import Talisman
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
 
-from database import init_db, db_get_voter, db_mark_voted, db_cast_vote, db_get_vote_counts, db_get_user_vote, db_get_voted_biometrics, db_get_regional_results, db_get_available_districts
-from face_utils import detect_blink, verify_face, check_biometric_duplicate
+    from database import init_db, db_get_voter, db_mark_voted, db_cast_vote, db_get_vote_counts, db_get_user_vote, db_get_voted_biometrics, db_get_regional_results, db_get_available_districts
+    from face_utils import detect_blink, verify_face, check_biometric_duplicate
 
-app = Flask(__name__)
-app.secret_key = 'smart_voting_secure_key_2024_AP'
+    app = Flask(__name__)
+    app.secret_key = 'smart_voting_secure_key_2024_AP'
+
+except Exception as e:
+    print("CRITICAL STARTUP ERROR:")
+    traceback.print_exc()
+    sys.exit(1)
 
 # ── Security Middleware ──────────────────────────────────────────────────────
 # Enforce security headers (Permissive for local media/scripts)
